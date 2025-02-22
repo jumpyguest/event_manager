@@ -21,6 +21,10 @@ def get_hour(datetime, time_hash)
   time_hash[Time.strptime(datetime, "%m/%d/%Y %k:%M").hour] += 1
 end
 
+def get_weekday(datetime, time_hash)
+  time_hash[Time.strptime(datetime, "%m/%d/%Y %k:%M").wday] += 1
+end
+
 def legislators_by_zipcode(zip)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
   civic_info.key = File.read('secret.key').strip
@@ -51,6 +55,12 @@ def get_most_hour(time_hash)
   p time_hash.select { |key, value| value ==  max_val }
 end
 
+def get_most_weekday(time_hash)
+  max_val = time_hash.values.max
+  key = time_hash.select { |key, value| value ==  max_val }.key(max_val)
+  p WEEKDAYS[key]
+end
+
 puts 'EventManager initialized.'
 
 contents = CSV.open(
@@ -59,6 +69,7 @@ contents = CSV.open(
   header_converters: :symbol
 )
 
+WEEKDAYS = {0=>'Sunday', 1=>'Monday', 2=>'Tuesday', 3=>'Wednesday', 4=>'Thursday', 5=>'Friday', 6=>'Saturday'}
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 time_hash = Hash.new(0)
@@ -67,7 +78,9 @@ contents.each do |row|
   id = row[0]
   name = row[:first_name]
   phone = clean_phonenumber(row[:homephone])
-  get_hour(row[:regdate], time_hash)
+  # get_hour(row[:regdate], time_hash)
+  get_weekday(row[:regdate], time_hash)
+
   # zipcode = clean_zipcode(row[:zipcode])
 
   # legislators = legislators_by_zipcode(zipcode)
@@ -76,5 +89,6 @@ contents.each do |row|
 
   # save_thank_you_letter(id,form_letter)
 end
-
-get_most_hour(time_hash)
+# p time_hash.sort_by {|k, val| val}
+get_most_weekday(time_hash)
+# get_most_hour(time_hash)
