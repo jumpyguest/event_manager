@@ -17,6 +17,10 @@ def clean_phonenumber(phone)
   phone_cleaned
 end
 
+def get_hour(datetime, time_hash)
+  time_hash[Time.strptime(datetime, "%m/%d/%Y %k:%M").hour] += 1
+end
+
 def legislators_by_zipcode(zip)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
   civic_info.key = File.read('secret.key').strip
@@ -42,6 +46,11 @@ def save_thank_you_letter(id,form_letter)
   end
 end
 
+def get_most_hour(time_hash)
+  max_val = time_hash.values.max
+  p time_hash.select { |key, value| value ==  max_val }
+end
+
 puts 'EventManager initialized.'
 
 contents = CSV.open(
@@ -52,13 +61,13 @@ contents = CSV.open(
 
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
+time_hash = Hash.new(0)
 
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
-
   phone = clean_phonenumber(row[:homephone])
-  p phone
+  get_hour(row[:regdate], time_hash)
   # zipcode = clean_zipcode(row[:zipcode])
 
   # legislators = legislators_by_zipcode(zipcode)
@@ -67,3 +76,5 @@ contents.each do |row|
 
   # save_thank_you_letter(id,form_letter)
 end
+
+get_most_hour(time_hash)
